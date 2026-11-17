@@ -47,9 +47,11 @@ export function BalanceOverview({ supplierId }: BalanceOverviewProps) {
 
   return (
     <div className={styles.container}>
-      <div className={styles.heading}>Balance Overview</div>
+      <header className={styles.header}>
+        <div className={styles.heading}>Balance Overview</div>
 
-      <FilterTabs activeFilter={filter} onFilterChange={handleFilterChange} />
+        <FilterTabs activeFilter={filter} onFilterChange={handleFilterChange} />
+      </header>
 
       <div
         id={TRANSACTIONS_PANEL_ID}

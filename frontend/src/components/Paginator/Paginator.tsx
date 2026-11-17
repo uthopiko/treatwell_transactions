@@ -42,24 +42,24 @@ export function Paginator({
                 {formatSummary(totalCount, pageSize, currentPage)}
             </p>
 
-            {showPaginationControls && (
-                <div className={styles.controls}>
-                    <div className={styles.pageSize}>
-                        <label htmlFor={pageSizeId}>Rows per page</label>
-                        <select
-                            id={pageSizeId}
-                            className={styles.select}
-                            value={String(pageSize)}
-                            onChange={(event) => handlePageSizeChange(event.target.value)}
-                        >
-                            {PAGE_SIZE_OPTIONS.map((size) => (
-                                <option key={size} value={size}>
-                                    {size}
-                                </option>
-                            ))}
-                            <option value={ALL_PAGE_SIZE}>All</option>
-                        </select>
-                    </div>
+            <div className={styles.controls}>
+                <div className={styles.pageSize}>
+                    <label htmlFor={pageSizeId}>Rows per page</label>
+                    <select
+                        id={pageSizeId}
+                        className={styles.select}
+                        value={String(pageSize)}
+                        onChange={(event) => handlePageSizeChange(event.target.value)}
+                    >
+                        {PAGE_SIZE_OPTIONS.map((size) => (
+                            <option key={size} value={size}>
+                                {size}
+                            </option>
+                        ))}
+                        <option value={ALL_PAGE_SIZE}>All</option>
+                    </select>
+                </div>
+                {showPaginationControls && (
 
                     <div className={styles.pages}>
                         <button
@@ -93,8 +93,8 @@ export function Paginator({
                             Next
                         </button>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </nav>
     );
 }

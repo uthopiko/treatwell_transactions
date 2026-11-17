@@ -98,7 +98,7 @@ describe('Paginator', () => {
     render(<Paginator {...paginatorProps({ pageSize: ALL_PAGE_SIZE })} />);
 
     expect(screen.getByRole('status')).toBeInTheDocument();
-    expect(screen.queryByRole('combobox', { name: PAGE_SIZE_LABEL })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: PAGE_SIZE_LABEL })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: PREVIOUS_LABEL })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: NEXT_LABEL })).not.toBeInTheDocument();
   });
@@ -110,7 +110,7 @@ describe('Paginator', () => {
       />,
     );
 
-    expect(screen.queryByRole('combobox', { name: PAGE_SIZE_LABEL })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: PAGE_SIZE_LABEL })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: PREVIOUS_LABEL })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: NEXT_LABEL })).not.toBeInTheDocument();
   });
@@ -119,7 +119,7 @@ describe('Paginator', () => {
     render(<Paginator {...paginatorProps({ totalCount: EMPTY_COUNT, currentPage: FIRST_PAGE })} />);
 
     expect(screen.getByRole('status')).toBeInTheDocument();
-    expect(screen.queryByRole('combobox', { name: PAGE_SIZE_LABEL })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: PAGE_SIZE_LABEL })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: PREVIOUS_LABEL })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: NEXT_LABEL })).not.toBeInTheDocument();
   });
