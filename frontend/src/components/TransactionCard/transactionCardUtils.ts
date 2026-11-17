@@ -27,29 +27,3 @@ export function getTransactionDisplay(
       return { icon: '\u2022', label: 'Other' };
   }
 }
-
-export function getStatusLabel(status: TransactionStatus): string {
-  const labels: Record<TransactionStatus, string> = {
-    COMPLETED: 'Completed',
-    CANCELLED: 'Cancelled',
-    FAILED: 'Failed',
-    PAID: 'Paid',
-    RECEIVED: 'Received',
-    REFUNDED: 'Refunded',
-    REVERSED: 'Reversed',
-  };
-  return labels[status];
-}
-
-export function getStatusClass(status: TransactionStatus): string {
-  const classes: Record<TransactionStatus, string> = {
-    COMPLETED: 'completed',
-    CANCELLED: 'cancelled',
-    FAILED: 'failed',
-    PAID: 'paid',
-    RECEIVED: 'received',
-    REFUNDED: 'refunded',
-    REVERSED: 'reversed',
-  };
-  return classes[status];
-}

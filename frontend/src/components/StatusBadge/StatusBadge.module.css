@@ -1,0 +1,42 @@
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+}
+
+.badge[data-status='COMPLETED'] {
+  background: var(--color-badge-completed);
+  color: var(--color-badge-completed-text);
+}
+
+.badge[data-status='CANCELLED'] {
+  background: var(--color-badge-cancelled);
+  color: var(--color-badge-cancelled-text);
+}
+
+.badge[data-status='FAILED'] {
+  background: var(--color-badge-failed);
+  color: var(--color-badge-failed-text);
+}
+
+.badge[data-status='PAID'] {
+  background: var(--color-badge-paid);
+  color: var(--color-badge-paid-text);
+}
+
+.badge[data-status='RECEIVED'] {
+  background: var(--color-badge-received);
+  color: var(--color-badge-received-text);
+}
+
+.badge[data-status='REFUNDED'] {
+  background: var(--color-badge-refunded);
+  color: var(--color-badge-refunded-text);
+}
+
+.badge[data-status='REVERSED'] {
+  background: var(--color-badge-reversed);
+  color: var(--color-badge-reversed-text);
+}

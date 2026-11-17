@@ -3,7 +3,7 @@ import type { TransactionEntry, TransactionFilter } from '../../types/transactio
 import { DEFAULT_PAGE_SIZE, type PageSize } from '../../config/pagination';
 import { useTransactions } from '../../hooks/useTransactions';
 import { useTransactionCount } from '../../hooks/useTransactionCount';
-import { FilterTabs } from '../FilterTabs/FilterTabs';
+import { FilterTabs, TRANSACTIONS_PANEL_ID, getFilterTabId } from '../FilterTabs/FilterTabs';
 import { TransactionsList } from '../TransactionsList/TransactionsList';
 import { TransactionDetails } from '../TransactionDetails/TransactionDetails';
 import { Paginator } from '../Paginator/Paginator';
@@ -51,16 +51,22 @@ export function BalanceOverview({ supplierId }: BalanceOverviewProps) {
 
       <FilterTabs activeFilter={filter} onFilterChange={handleFilterChange} />
 
-      {isLoading && (
-        <div className={styles.state}>Loading transactions...</div>
-      )}
+      <div
+        id={TRANSACTIONS_PANEL_ID}
+        role="tabpanel"
+        aria-labelledby={getFilterTabId(filter)}
+      >
+        {isLoading && (
+          <div className={styles.state} role="status">Loading transactions...</div>
+        )}
 
-      {!isLoading && (
-        <TransactionsList
-          transactions={transactions}
-          onTransactionClick={handleTransactionClick}
-        />
-      )}
+        {!isLoading && (
+          <TransactionsList
+            transactions={transactions}
+            onTransactionClick={handleTransactionClick}
+          />
+        )}
+      </div>
 
       {!isCountLoading && (
         <Paginator

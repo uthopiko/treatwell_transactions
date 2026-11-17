@@ -1,7 +1,8 @@
 import type { TransactionEntry } from '../../types/transaction';
 import { formatCurrency } from '../BalanceOverview/balanceUtils';
-import { getTransactionDisplay, getStatusLabel, getStatusClass } from '../TransactionCard/transactionCardUtils';
+import { getTransactionDisplay } from '../TransactionCard/transactionCardUtils';
 import styles from './TransactionDetails.module.css';
+import { StatusBadge } from '../StatusBadge/StatusBadge';
 import { useEffect } from 'react';
 
 type TransactionDetailsProps = {
@@ -11,7 +12,6 @@ type TransactionDetailsProps = {
 
 export function TransactionDetails({ transaction, onClose }: TransactionDetailsProps) {
   const display = getTransactionDisplay(transaction.type, transaction.status);
-  const statusClass = getStatusClass(transaction.status);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -33,8 +33,8 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
           <div className={styles.hero}>
             <span className={styles.heroIcon}>{display.icon}</span>
             <span className={styles.heroLabel}>{display.label}</span>
-            <span className={`${styles.heroBadge} ${styles[statusClass]}`}>
-              {getStatusLabel(transaction.status)}
+            <span className={styles.badgeSlot}>
+              <StatusBadge status={transaction.status} />
             </span>
           </div>
 

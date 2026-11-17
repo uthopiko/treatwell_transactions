@@ -1,6 +1,7 @@
 import type { TransactionEntry } from '../../types/transaction';
 import { formatCurrency } from '../BalanceOverview/balanceUtils';
-import { getTransactionDisplay, getStatusLabel, getStatusClass } from './transactionCardUtils';
+import { StatusBadge } from '../StatusBadge/StatusBadge';
+import { getTransactionDisplay } from './transactionCardUtils';
 import styles from './TransactionCard.module.css';
 
 type TransactionCardProps = {
@@ -10,7 +11,6 @@ type TransactionCardProps = {
 
 export function TransactionCard({ transaction, onClick }: TransactionCardProps) {
   const display = getTransactionDisplay(transaction.type, transaction.status);
-  const statusClass = getStatusClass(transaction.status);
   const isNegative = transaction.amount < 0;
 
   return (
@@ -26,9 +26,7 @@ export function TransactionCard({ transaction, onClick }: TransactionCardProps) 
         <div className={`${styles.amount} ${isNegative ? styles.negative : ''}`}>
           {formatCurrency(transaction.amount)}
         </div>
-        <span className={`${styles.badge} ${styles[statusClass]}`}>
-          {getStatusLabel(transaction.status)}
-        </span>
+        <StatusBadge status={transaction.status} />
       </div>
     </div>
   );
