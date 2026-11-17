@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.challenge.transactions.dto.TransactionCountResponse;
 import com.challenge.transactions.dto.TransactionListResponse;
 import com.challenge.transactions.dto.TransactionQuery;
 import com.challenge.transactions.service.TransactionQueryHandler;
@@ -27,6 +28,16 @@ public class TransactionController {
             @ModelAttribute TransactionQuery query) {
 
         TransactionListResponse response = transactionQueryHandler.listTransactions(supplierId, query);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/count")
+    public ResponseEntity<TransactionCountResponse> countTransactions(
+            @PathVariable long supplierId,
+            @ModelAttribute TransactionQuery query) {
+
+        TransactionCountResponse response = transactionQueryHandler.countTransactions(supplierId, query);
 
         return ResponseEntity.ok(response);
     }

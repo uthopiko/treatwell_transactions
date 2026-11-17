@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
+import com.challenge.transactions.dto.TransactionCountResponse;
 import com.challenge.transactions.dto.TransactionEntryDto;
 import com.challenge.transactions.dto.TransactionListResponse;
 import com.challenge.transactions.object_mothers.TransactionMother;
@@ -59,6 +60,17 @@ class TransactionQueryHandlerTest {
 
         verify(repository).findAll(any(Specification.class), eq(
                 PageRequest.of(PAGE, SIZE_PER_PAGE, TransactionSpecifications.DEFAULT_SORT)));
+    }
+
+    @Test
+    void should_count_every_match_ignoring_paging() {
+        when(repository.count(any(Specification.class))).thenReturn(3L);
+
+        TransactionCountResponse response =
+                handler.countTransactions(SUPPLIER_ID, TransactionQueryMother.paged(PAGE, SIZE_PER_PAGE));
+
+        verify(repository).count(any(Specification.class));
+        assertThat(response.count()).isEqualTo(3L);
     }
 
     @Test

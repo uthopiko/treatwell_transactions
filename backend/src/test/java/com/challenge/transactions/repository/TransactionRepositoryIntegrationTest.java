@@ -48,6 +48,8 @@ class TransactionRepositoryIntegrationTest {
     private static final String NULL_DATE_TRANSACTION_ID = "tx-null-date";
     private static final String NULL_DATE_SOURCE_ID = "source-null-date";
     private static final int COLLIDING_TRANSACTION_COUNT = 2;
+    private static final long SUPPLIER_TRANSACTION_COUNT = 4L;
+    private static final long FILTERED_TRANSACTION_COUNT = 1L;
 
     @Autowired
     private TransactionRepository repository;
@@ -179,6 +181,22 @@ class TransactionRepositoryIntegrationTest {
                 SUPPLIER_ID, null, null, FULFILMENT_DATE, FULFILMENT_DATE);
 
         assertThat(ids(result)).containsExactly(TIE_BREAK_TRANSACTION_ID, SECOND_TRANSACTION_ID);
+    }
+
+    @Test
+    void should_count_supplier_transactions_matching_the_listing_filters(SoftAssertions softly) {
+        long allSupplierTransactions = repository.count(
+                TransactionSpecifications.forSupplier(SUPPLIER_ID, null, null, null, null));
+        long filteredTransactions = repository.count(
+                TransactionSpecifications.forSupplier(
+                        SUPPLIER_ID,
+                        TransactionType.ORDER,
+                        null,
+                        FULFILMENT_DATE,
+                        LATER_FULFILMENT_DATE));
+
+        softly.assertThat(allSupplierTransactions).isEqualTo(SUPPLIER_TRANSACTION_COUNT);
+        softly.assertThat(filteredTransactions).isEqualTo(FILTERED_TRANSACTION_COUNT);
     }
 
     @Test

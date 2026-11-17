@@ -7,6 +7,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.challenge.transactions.domain.Transaction;
+import com.challenge.transactions.dto.TransactionCountResponse;
 import com.challenge.transactions.dto.TransactionEntryDto;
 import com.challenge.transactions.dto.TransactionListResponse;
 import com.challenge.transactions.dto.TransactionQuery;
@@ -31,13 +32,12 @@ public class TransactionQueryHandler {
         return new TransactionListResponse(dtos);
     }
 
+    public TransactionCountResponse countTransactions(long supplierId, TransactionQuery query) {
+        return new TransactionCountResponse(repository.count(specificationFor(supplierId, query)));
+    }
+
     private List<Transaction> getTransactions(long supplierId, TransactionQuery query) {
-        Specification<Transaction> specification = TransactionSpecifications.forSupplier(
-                supplierId,
-                query.type(),
-                query.status(),
-                query.fromDate(),
-                query.toDate());
+        Specification<Transaction> specification = specificationFor(supplierId, query);
 
         if (query.paged()) {
             PageRequest pageRequest = PageRequest.of(
@@ -50,5 +50,14 @@ public class TransactionQueryHandler {
         }
 
         return repository.findAll(specification, TransactionSpecifications.DEFAULT_SORT);
+    }
+
+    private Specification<Transaction> specificationFor(long supplierId, TransactionQuery query) {
+        return TransactionSpecifications.forSupplier(
+                supplierId,
+                query.type(),
+                query.status(),
+                query.fromDate(),
+                query.toDate());
     }
 }

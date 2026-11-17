@@ -64,7 +64,10 @@ class TransactionsApiIntegrationTest {
     private static final String SUPPLIER_PATH_PREFIX = "/api/suppliers/";
     private static final String TRANSACTIONS_SUFFIX = "/transactions";
     private static final String TRANSACTIONS_PATH = SUPPLIER_PATH_PREFIX + "{supplierId}" + TRANSACTIONS_SUFFIX;
+    private static final String TRANSACTIONS_COUNT_SUFFIX = "/count";
+    private static final String TRANSACTIONS_COUNT_PATH = TRANSACTIONS_PATH + TRANSACTIONS_COUNT_SUFFIX;
     private static final String WEBHOOK_PATH = "/api/webhooks/transactions";
+    private static final String TOTAL_COUNT_JSON_PATH = "$.count";
     private static final String TRANSACTIONS_JSON_PATH = "$.transactions";
     private static final String TRANSACTION_COUNT_JSON_PATH = TRANSACTIONS_JSON_PATH + ".length()";
     private static final String TRANSACTION_IDS_JSON_PATH = TRANSACTIONS_JSON_PATH + "[*].id";
@@ -127,6 +130,16 @@ class TransactionsApiIntegrationTest {
                         .param(TO_DATE_PARAM, LATER_FULFILMENT_DATE_ISO))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath(TRANSACTION_IDS_JSON_PATH).value(contains(THIRD_TRANSACTION_ID)));
+    }
+
+    @Test
+    void should_count_supplier_transactions_matching_type_and_date_filters() throws Exception {
+        mockMvc.perform(get(TRANSACTIONS_COUNT_PATH, SUPPLIER_ID)
+                        .param(TYPE_PARAM, TransactionType.ORDER.name())
+                        .param(FROM_DATE_PARAM, FULFILMENT_DATE_ISO)
+                        .param(TO_DATE_PARAM, LATER_FULFILMENT_DATE_ISO))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(TOTAL_COUNT_JSON_PATH).value(1));
     }
 
     @Test
