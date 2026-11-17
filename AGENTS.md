@@ -134,3 +134,74 @@ class TransactionEntryDtoTest {
 - Disabled tests name the open bug and the condition for enabling them.
 - No comments or Javadoc in test code.
 - `./mvnw test` passes.
+
+## Frontend testing
+
+### Stack and commands
+
+- Vitest, jsdom, React Testing Library, `@testing-library/user-event`, `@testing-library/jest-dom`, MSW.
+- Run all tests: `cd frontend && npm test`
+- Watch: `cd frontend && npm run test:watch`
+- Run one file: `cd frontend && npm test -- src/components/BalanceOverview/balanceUtils.test.ts`
+
+### Test levels
+
+- Domain unit tests: pure functions in `balanceUtils.ts` and `transactionCardUtils.ts`. No React.
+- Wire unit tests: `api/transactions.ts` URL shape, parameters and failure semantics.
+- Hook unit tests: `useTransactions` filter-to-type mapping and cache identity.
+- Component tests: user interaction, conditional rendering and lifecycle with React Testing Library.
+- One flow test: `BalanceOverview` with the real hook and MSW, proving filters reach the API and results render.
+
+### Scope
+
+- Test behaviour and domain rules, not design.
+- Never assert CSS module class names, inline styles or snapshots.
+- CSS is disabled in the test config so styling cannot leak into assertions.
+- Do not test type-only modules, `App`, `main`, third-party internals, or mappings TypeScript already enforces.
+
+### Test ownership
+
+- Test each rule once, at the lowest level that can observe it.
+- Domain maths belongs to unit tests; components only prove the wiring.
+- Keep one flow test as proof that filters are wired through.
+
+### Test naming
+
+- The `should_` prefix and snake_case are backend-only; do not use them here.
+- Use `describe` per unit and plain present-tense behaviour sentences in `it`.
+
+```ts
+describe('balanceUtils', () => {
+  it('counts a failed payout as zero balance impact', () => {});
+});
+```
+
+### Test data
+
+- Use `src/test/fixtures/TestFixtures.ts` for shared values.
+- Use `src/test/object_mothers/TransactionMother.ts` for entities: `order()`, `payout()`, `payin()`, `other()`, and `transaction()` for variations.
+- Do not construct fixtures inline in a test when a mother exists.
+- No magic strings or numbers outside constant declarations.
+
+### Rendering
+
+- Use `renderWithClient` from `src/test/render.tsx` for anything that reads queries; it gives each test a fresh `QueryClient`.
+- Prefer `user-event` over `fireEvent`.
+- Query by role, label or text; never by CSS class.
+- Pin time with `vi.setSystemTime(fixedNow())` when a rule depends on the current date.
+
+### Bug regressions
+
+- Write the regression test before the fix.
+- Keep it skipped with a reason while the bug is open, so the suite stays green; removing the skip is the definition of done.
+- Prove the bug once where the user can observe it.
+
+### Review checklist
+
+- Test names read as behaviour sentences, with no `should_` prefix.
+- Test data comes from a mother and `TestFixtures`.
+- No CSS, style or snapshot assertions.
+- No rule tested twice at different layers.
+- Skipped tests name the open bug and the condition for enabling them.
+- No comments in test code.
+- `npm test` passes.
