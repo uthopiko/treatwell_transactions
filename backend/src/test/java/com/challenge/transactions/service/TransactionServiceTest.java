@@ -19,11 +19,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +35,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
 import com.challenge.transactions.domain.Transaction;
 import com.challenge.transactions.domain.TransactionStatus;
@@ -43,14 +48,16 @@ import com.challenge.transactions.dto.TransactionEntryDto;
 import com.challenge.transactions.dto.TransactionListResponse;
 import com.challenge.transactions.dto.WebhookEventDto;
 import com.challenge.transactions.repository.TransactionRepository;
+import com.challenge.transactions.repository.TransactionSpecifications;
 import com.challenge.transactions.object_mothers.TransactionMother;
+import com.challenge.transactions.object_mothers.TransactionQueryMother;
 import com.challenge.transactions.object_mothers.WebhookEventMother;
 
 @ExtendWith({MockitoExtension.class, SoftAssertionsExtension.class})
 class TransactionServiceTest {
 
-    private static final LocalDate FROM_DATE = LocalDate.of(2024, 3, 1);
-    private static final LocalDate TO_DATE = LocalDate.of(2024, 3, 31);
+    private static final int PAGE = 0;
+    private static final int SIZE_PER_PAGE = 2;
     private static final String UNKNOWN_TRANSACTION_TYPE = "NOT_A_TYPE";
     private static final String UNKNOWN_STATUS = "NOT_A_STATUS";
     private static final String MALFORMED_FULFILMENT_DATE = "20/03/2024";
@@ -62,27 +69,33 @@ class TransactionServiceTest {
     private TransactionService service;
 
     @Test
-    void should_pass_every_filter_to_the_repository() {
-        when(repository.findTransactions(
-                SUPPLIER_ID, TransactionType.ORDER, TransactionStatus.COMPLETED, FROM_DATE, TO_DATE))
-                .thenReturn(List.of());
+    void should_return_every_match_without_paging_when_size_per_page_is_absent() {
+        when(repository.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of());
 
-        service.listTransactions(
-                SUPPLIER_ID, TransactionType.ORDER, TransactionStatus.COMPLETED, FROM_DATE, TO_DATE);
+        service.listTransactions(SUPPLIER_ID, TransactionQueryMother.query());
 
-        verify(repository).findTransactions(
-                SUPPLIER_ID, TransactionType.ORDER, TransactionStatus.COMPLETED, FROM_DATE, TO_DATE);
+        verify(repository).findAll(any(Specification.class), eq(TransactionSpecifications.DEFAULT_SORT));
+    }
+
+    @Test
+    void should_return_a_page_when_size_per_page_is_given() {
+        when(repository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(Page.empty());
+
+        service.listTransactions(SUPPLIER_ID, TransactionQueryMother.paged(PAGE, SIZE_PER_PAGE));
+
+        verify(repository).findAll(any(Specification.class), eq(
+                PageRequest.of(PAGE, SIZE_PER_PAGE, TransactionSpecifications.DEFAULT_SORT)));
     }
 
     @Test
     void should_map_results_and_preserve_repository_order() {
-        when(repository.findTransactions(SUPPLIER_ID, null, null, null, null))
+        when(repository.findAll(any(Specification.class), any(Sort.class)))
                 .thenReturn(List.of(
                         TransactionMother.transaction().withId(SECOND_TRANSACTION_ID).build(),
                         TransactionMother.transaction().withId(TransactionMother.ID).build()));
 
         TransactionListResponse response =
-                service.listTransactions(SUPPLIER_ID, null, null, null, null);
+                service.listTransactions(SUPPLIER_ID, TransactionQueryMother.query());
 
         assertThat(response.transactions())
                 .extracting(TransactionEntryDto::id)
@@ -91,11 +104,11 @@ class TransactionServiceTest {
 
     @Test
     void should_return_empty_response_when_there_are_no_matches() {
-        when(repository.findTransactions(SUPPLIER_ID, null, null, null, null))
+        when(repository.findAll(any(Specification.class), any(Sort.class)))
                 .thenReturn(List.of());
 
         TransactionListResponse response =
-                service.listTransactions(SUPPLIER_ID, null, null, null, null);
+                service.listTransactions(SUPPLIER_ID, TransactionQueryMother.query());
 
         assertThat(response.transactions()).isEmpty();
     }

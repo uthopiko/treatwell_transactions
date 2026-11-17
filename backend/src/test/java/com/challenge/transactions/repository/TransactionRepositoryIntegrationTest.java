@@ -17,6 +17,7 @@ import static com.challenge.transactions.fixtures.TestFixtures.TIE_BREAK_TRANSAC
 import static com.challenge.transactions.fixtures.TestFixtures.TRANSACTION_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.assertj.core.api.SoftAssertions;
@@ -86,7 +87,7 @@ class TransactionRepositoryIntegrationTest {
 
     @Test
     void should_return_all_supplier_transactions_when_no_filters_are_given() {
-        List<Transaction> result = repository.findTransactions(SUPPLIER_ID, null, null, null, null);
+        List<Transaction> result = transactionsFor(SUPPLIER_ID, null, null, null, null);
 
         assertThat(ids(result)).containsExactly(
                 THIRD_TRANSACTION_ID,
@@ -97,8 +98,7 @@ class TransactionRepositoryIntegrationTest {
 
     @Test
     void should_filter_by_transaction_type() {
-        List<Transaction> result =
-                repository.findTransactions(SUPPLIER_ID, TransactionType.ORDER, null, null, null);
+        List<Transaction> result = transactionsFor(SUPPLIER_ID, TransactionType.ORDER, null, null, null);
 
         assertThat(ids(result)).containsExactly(THIRD_TRANSACTION_ID, TRANSACTION_ID);
     }
@@ -106,7 +106,7 @@ class TransactionRepositoryIntegrationTest {
     @Test
     void should_filter_by_status() {
         List<Transaction> result =
-                repository.findTransactions(SUPPLIER_ID, null, TransactionStatus.COMPLETED, null, null);
+                transactionsFor(SUPPLIER_ID, null, TransactionStatus.COMPLETED, null, null);
 
         assertThat(ids(result)).containsExactly(
                 THIRD_TRANSACTION_ID,
@@ -116,7 +116,7 @@ class TransactionRepositoryIntegrationTest {
 
     @Test
     void should_treat_date_range_as_inclusive() {
-        List<Transaction> result = repository.findTransactions(
+        List<Transaction> result = transactionsFor(
                 SUPPLIER_ID, null, null, EARLIER_FULFILMENT_DATE, FULFILMENT_DATE);
 
         assertThat(ids(result)).containsExactly(
@@ -127,9 +127,9 @@ class TransactionRepositoryIntegrationTest {
 
     @Test
     void should_support_open_ended_date_filters(SoftAssertions softly) {
-        List<Transaction> fromDateOnly = repository.findTransactions(
+        List<Transaction> fromDateOnly = transactionsFor(
                 SUPPLIER_ID, null, null, FULFILMENT_DATE, null);
-        List<Transaction> toDateOnly = repository.findTransactions(
+        List<Transaction> toDateOnly = transactionsFor(
                 SUPPLIER_ID, null, null, null, FULFILMENT_DATE);
 
         softly.assertThat(ids(fromDateOnly)).containsExactly(
@@ -144,7 +144,7 @@ class TransactionRepositoryIntegrationTest {
 
     @Test
     void should_combine_all_filters() {
-        List<Transaction> result = repository.findTransactions(
+        List<Transaction> result = transactionsFor(
                 SUPPLIER_ID,
                 TransactionType.ORDER,
                 TransactionStatus.COMPLETED,
@@ -157,14 +157,14 @@ class TransactionRepositoryIntegrationTest {
     @Test
     void should_not_leak_transactions_from_another_supplier() {
         List<Transaction> result =
-                repository.findTransactions(OTHER_SUPPLIER_ID, null, null, null, null);
+                transactionsFor(OTHER_SUPPLIER_ID, null, null, null, null);
 
         assertThat(ids(result)).containsExactly(OTHER_SUPPLIER_TRANSACTION_ID);
     }
 
     @Test
     void should_order_by_fulfilment_date_descending_then_id_descending() {
-        List<Transaction> result = repository.findTransactions(SUPPLIER_ID, null, null, null, null);
+        List<Transaction> result = transactionsFor(SUPPLIER_ID, null, null, null, null);
 
         assertThat(ids(result)).containsExactly(
                 THIRD_TRANSACTION_ID,
@@ -175,7 +175,7 @@ class TransactionRepositoryIntegrationTest {
 
     @Test
     void should_resolve_ties_by_id_descending() {
-        List<Transaction> result = repository.findTransactions(
+        List<Transaction> result = transactionsFor(
                 SUPPLIER_ID, null, null, FULFILMENT_DATE, FULFILMENT_DATE);
 
         assertThat(ids(result)).containsExactly(TIE_BREAK_TRANSACTION_ID, SECOND_TRANSACTION_ID);
@@ -225,11 +225,11 @@ class TransactionRepositoryIntegrationTest {
                 .withoutFulfilmentDate()
                 .build());
 
-        List<Transaction> unfiltered = repository.findTransactions(SUPPLIER_ID, null, null, null, null);
+        List<Transaction> unfiltered = transactionsFor(SUPPLIER_ID, null, null, null, null);
         List<Transaction> fromFiltered =
-                repository.findTransactions(SUPPLIER_ID, null, null, FULFILMENT_DATE, null);
+                transactionsFor(SUPPLIER_ID, null, null, FULFILMENT_DATE, null);
         List<Transaction> toFiltered =
-                repository.findTransactions(SUPPLIER_ID, null, null, null, FULFILMENT_DATE);
+                transactionsFor(SUPPLIER_ID, null, null, null, FULFILMENT_DATE);
 
         softly.assertThat(ids(unfiltered)).contains(NULL_DATE_TRANSACTION_ID);
         softly.assertThat(ids(fromFiltered)).doesNotContain(NULL_DATE_TRANSACTION_ID);
@@ -244,6 +244,17 @@ class TransactionRepositoryIntegrationTest {
         softly.assertThat(saved.getId()).isNotNull();
         softly.assertThat(saved.getCreated()).isNotNull();
         softly.assertThat(saved.getUpdated()).isNotNull();
+    }
+
+    private List<Transaction> transactionsFor(
+            long supplierId,
+            TransactionType type,
+            TransactionStatus status,
+            LocalDate fromDate,
+            LocalDate toDate) {
+        return repository.findAll(
+                TransactionSpecifications.forSupplier(supplierId, type, status, fromDate, toDate),
+                TransactionSpecifications.DEFAULT_SORT);
     }
 
     private static List<String> ids(List<Transaction> transactions) {

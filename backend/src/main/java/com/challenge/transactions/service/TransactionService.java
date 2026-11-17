@@ -3,6 +3,8 @@ package com.challenge.transactions.service;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.challenge.transactions.domain.Transaction;
@@ -10,8 +12,10 @@ import com.challenge.transactions.domain.TransactionStatus;
 import com.challenge.transactions.domain.TransactionType;
 import com.challenge.transactions.dto.TransactionEntryDto;
 import com.challenge.transactions.dto.TransactionListResponse;
+import com.challenge.transactions.dto.TransactionQuery;
 import com.challenge.transactions.dto.WebhookEventDto;
 import com.challenge.transactions.repository.TransactionRepository;
+import com.challenge.transactions.repository.TransactionSpecifications;
 
 @Service
 public class TransactionService {
@@ -22,18 +26,32 @@ public class TransactionService {
         this.repository = repository;
     }
 
-    public TransactionListResponse listTransactions(
-            Long supplierId,
-            TransactionType type,
-            TransactionStatus status,
-            LocalDate fromDate,
-            LocalDate toDate) {
-        List<Transaction> results = repository.findTransactions(supplierId, type, status, fromDate, toDate);
+    public TransactionListResponse listTransactions(long supplierId, TransactionQuery query) {
+        List<Transaction> results = getTransactions(supplierId, query);
         List<TransactionEntryDto> dtos = results.stream()
                 .map(TransactionEntryDto::from)
                 .toList();
 
         return new TransactionListResponse(dtos);
+    }
+
+    private List<Transaction> getTransactions(long supplierId, TransactionQuery query) {
+        Specification<Transaction> specification = TransactionSpecifications.forSupplier(
+                supplierId,
+                query.type(),
+                query.status(),
+                query.fromDate(),
+                query.toDate());
+
+        if (query.paged()) {
+            PageRequest pageRequest = PageRequest.of(
+                    query.page(),
+                    query.sizePerPage(),
+                    TransactionSpecifications.DEFAULT_SORT);
+            return repository.findAll(specification, pageRequest).getContent();
+        }
+
+        return repository.findAll(specification, TransactionSpecifications.DEFAULT_SORT);
     }
 
     public Transaction upsertFromWebhook(WebhookEventDto event) {
