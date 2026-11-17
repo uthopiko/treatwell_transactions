@@ -23,7 +23,7 @@ public class WebhookTransactionWriter {
         TransactionType type = TransactionType.valueOf(event.transactionType());
 
         Transaction transaction = repository
-                .findBySourceId(event.sourceId())
+                .findBySourceIdAndTransactionType(event.sourceId(), type)
                 .orElseGet(Transaction::new);
 
         transaction.setTransactionType(type);

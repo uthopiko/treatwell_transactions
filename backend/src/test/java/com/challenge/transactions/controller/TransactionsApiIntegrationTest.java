@@ -175,7 +175,6 @@ class TransactionsApiIntegrationTest {
                 .andExpect(jsonPath(FIRST_TRANSACTION_REFERENCE_JSON_PATH).value(WEBHOOK_REFERENCE));
     }
 
-    @Disabled("sourceId is not scoped by transaction type; enable when the upsert identity is fixed")
     @Test
     void should_not_overwrite_order_when_payout_reuses_source_id() throws Exception {
         postWebhook(WebhookEventMother.event()
