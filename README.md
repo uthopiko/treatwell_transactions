@@ -52,17 +52,38 @@ GET /api/suppliers/{supplierId}/transactions
 
 Query parameters:
 
-| Parameter  | Type                                | Description                |
-|------------|-------------------------------------|----------------------------|
-| `type`     | `ORDER\|PAYIN\|PAYOUT\|OTHER`       | Filter by transaction type |
-| `status`   | `COMPLETED\|CANCELLED\|FAILED\|...` | Filter by status           |
-| `fromDate` | `YYYY-MM-DD`                        | Start date filter          |
-| `toDate`   | `YYYY-MM-DD`                        | End date filter            |
+| Parameter     | Type                                | Description                                        |
+|---------------|-------------------------------------|----------------------------------------------------|
+| `type`        | `ORDER\|PAYIN\|PAYOUT\|OTHER`       | Filter by transaction type                         |
+| `status`      | `COMPLETED\|CANCELLED\|FAILED\|...` | Filter by status                                   |
+| `fromDate`    | `YYYY-MM-DD`                        | Start date filter                                  |
+| `toDate`      | `YYYY-MM-DD`                        | End date filter                                    |
+| `page`        | `0`-based integer                   | Page to return; defaults to `0`                    |
+| `sizePerPage` | Positive integer                    | Page size; omit to return every matching row       |
 
 Example:
 ```bash
 curl http://localhost:8080/api/suppliers/1001/transactions
-curl http://localhost:8080/api/suppliers/1001/transactions?type=ORDER
+curl "http://localhost:8080/api/suppliers/1001/transactions?type=ORDER&page=0&sizePerPage=10"
+```
+
+### Count Transactions
+
+```
+GET /api/suppliers/{supplierId}/transactions/count
+```
+
+Accepts the same filters as the list endpoint and returns the total number of
+matching transactions, ignoring pagination parameters.
+
+```bash
+curl "http://localhost:8080/api/suppliers/1001/transactions/count?type=ORDER"
+```
+
+Response:
+
+```json
+{ "count": 12 }
 ```
 
 ### Webhook (Upsert Transaction)

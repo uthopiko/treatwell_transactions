@@ -28,4 +28,8 @@ export type TransactionListResponse = {
   transactions: TransactionEntry[];
 };
 
+export type TransactionCountResponse = {
+  count: number;
+};
+
 export type TransactionFilter = 'all' | 'sales' | 'balance_payments' | 'payouts' | 'other';
