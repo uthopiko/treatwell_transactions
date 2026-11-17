@@ -9,16 +9,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.challenge.transactions.dto.TransactionListResponse;
 import com.challenge.transactions.dto.TransactionQuery;
-import com.challenge.transactions.service.TransactionService;
+import com.challenge.transactions.service.TransactionQueryHandler;
 
 @RestController
 @RequestMapping("/api/suppliers/{supplierId}/transactions")
 public class TransactionController {
 
-    private final TransactionService transactionService;
+    private final TransactionQueryHandler transactionQueryHandler;
 
-    public TransactionController(TransactionService transactionService) {
-        this.transactionService = transactionService;
+    public TransactionController(TransactionQueryHandler transactionQueryHandler) {
+        this.transactionQueryHandler = transactionQueryHandler;
     }
 
     @GetMapping
@@ -26,7 +26,7 @@ public class TransactionController {
             @PathVariable long supplierId,
             @ModelAttribute TransactionQuery query) {
 
-        TransactionListResponse response = transactionService.listTransactions(supplierId, query);
+        TransactionListResponse response = transactionQueryHandler.listTransactions(supplierId, query);
 
         return ResponseEntity.ok(response);
     }

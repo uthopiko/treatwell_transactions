@@ -10,21 +10,21 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.challenge.transactions.domain.Transaction;
 import com.challenge.transactions.dto.WebhookEventDto;
-import com.challenge.transactions.service.TransactionService;
+import com.challenge.transactions.service.WebhookTransactionWriter;
 
 @RestController
 @RequestMapping("/api/webhooks/transactions")
 public class WebhookController {
 
-    private final TransactionService transactionService;
+    private final WebhookTransactionWriter webhookTransactionWriter;
 
-    public WebhookController(TransactionService transactionService) {
-        this.transactionService = transactionService;
+    public WebhookController(WebhookTransactionWriter webhookTransactionWriter) {
+        this.webhookTransactionWriter = webhookTransactionWriter;
     }
 
     @PostMapping
     public ResponseEntity<Void> handleWebhook(@RequestBody WebhookEventDto event) {
-        Transaction transaction = transactionService.upsertFromWebhook(event);
+        Transaction transaction = webhookTransactionWriter.upsertFromWebhook(event);
         return ResponseEntity.created(URI.create("/api/suppliers/" + transaction.getSupplierId() + "/transactions")).build();
     }
 }

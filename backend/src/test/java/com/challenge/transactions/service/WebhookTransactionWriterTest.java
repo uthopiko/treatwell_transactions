@@ -10,7 +10,6 @@ import static com.challenge.transactions.fixtures.TestFixtures.NET_AMOUNT;
 import static com.challenge.transactions.fixtures.TestFixtures.PAYOUT_DESCRIPTION;
 import static com.challenge.transactions.fixtures.TestFixtures.PAYOUT_REFERENCE;
 import static com.challenge.transactions.fixtures.TestFixtures.REFERENCE_ID;
-import static com.challenge.transactions.fixtures.TestFixtures.SECOND_TRANSACTION_ID;
 import static com.challenge.transactions.fixtures.TestFixtures.SOURCE_ID;
 import static com.challenge.transactions.fixtures.TestFixtures.SUPPLIER_ID;
 import static com.challenge.transactions.fixtures.TestFixtures.TAX_AMOUNT;
@@ -19,13 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.format.DateTimeParseException;
-import java.util.List;
 import java.util.Optional;
 
 import org.assertj.core.api.SoftAssertions;
@@ -35,29 +32,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 
 import com.challenge.transactions.domain.Transaction;
 import com.challenge.transactions.domain.TransactionStatus;
 import com.challenge.transactions.domain.TransactionType;
-import com.challenge.transactions.dto.TransactionEntryDto;
-import com.challenge.transactions.dto.TransactionListResponse;
 import com.challenge.transactions.dto.WebhookEventDto;
-import com.challenge.transactions.repository.TransactionRepository;
-import com.challenge.transactions.repository.TransactionSpecifications;
 import com.challenge.transactions.object_mothers.TransactionMother;
-import com.challenge.transactions.object_mothers.TransactionQueryMother;
 import com.challenge.transactions.object_mothers.WebhookEventMother;
+import com.challenge.transactions.repository.TransactionRepository;
 
 @ExtendWith({MockitoExtension.class, SoftAssertionsExtension.class})
-class TransactionServiceTest {
+class WebhookTransactionWriterTest {
 
-    private static final int PAGE = 0;
-    private static final int SIZE_PER_PAGE = 2;
     private static final String UNKNOWN_TRANSACTION_TYPE = "NOT_A_TYPE";
     private static final String UNKNOWN_STATUS = "NOT_A_STATUS";
     private static final String MALFORMED_FULFILMENT_DATE = "20/03/2024";
@@ -66,59 +52,14 @@ class TransactionServiceTest {
     private TransactionRepository repository;
 
     @InjectMocks
-    private TransactionService service;
-
-    @Test
-    void should_return_every_match_without_paging_when_size_per_page_is_absent() {
-        when(repository.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of());
-
-        service.listTransactions(SUPPLIER_ID, TransactionQueryMother.query());
-
-        verify(repository).findAll(any(Specification.class), eq(TransactionSpecifications.DEFAULT_SORT));
-    }
-
-    @Test
-    void should_return_a_page_when_size_per_page_is_given() {
-        when(repository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(Page.empty());
-
-        service.listTransactions(SUPPLIER_ID, TransactionQueryMother.paged(PAGE, SIZE_PER_PAGE));
-
-        verify(repository).findAll(any(Specification.class), eq(
-                PageRequest.of(PAGE, SIZE_PER_PAGE, TransactionSpecifications.DEFAULT_SORT)));
-    }
-
-    @Test
-    void should_map_results_and_preserve_repository_order() {
-        when(repository.findAll(any(Specification.class), any(Sort.class)))
-                .thenReturn(List.of(
-                        TransactionMother.transaction().withId(SECOND_TRANSACTION_ID).build(),
-                        TransactionMother.transaction().withId(TransactionMother.ID).build()));
-
-        TransactionListResponse response =
-                service.listTransactions(SUPPLIER_ID, TransactionQueryMother.query());
-
-        assertThat(response.transactions())
-                .extracting(TransactionEntryDto::id)
-                .containsExactly(SECOND_TRANSACTION_ID, TransactionMother.ID);
-    }
-
-    @Test
-    void should_return_empty_response_when_there_are_no_matches() {
-        when(repository.findAll(any(Specification.class), any(Sort.class)))
-                .thenReturn(List.of());
-
-        TransactionListResponse response =
-                service.listTransactions(SUPPLIER_ID, TransactionQueryMother.query());
-
-        assertThat(response.transactions()).isEmpty();
-    }
+    private WebhookTransactionWriter writer;
 
     @Test
     void should_create_new_transaction_when_source_id_is_unknown(SoftAssertions softly) {
         when(repository.findBySourceId(SOURCE_ID)).thenReturn(Optional.empty());
         when(repository.save(any(Transaction.class))).thenAnswer(returnsFirstArg());
 
-        Transaction saved = service.upsertFromWebhook(WebhookEventMother.event().build());
+        Transaction saved = writer.upsertFromWebhook(WebhookEventMother.event().build());
 
         softly.assertThat(saved.getSourceId()).isEqualTo(SOURCE_ID);
         softly.assertThat(saved.getDescription()).isEqualTo(DESCRIPTION);
@@ -131,7 +72,7 @@ class TransactionServiceTest {
         when(repository.findBySourceId(SOURCE_ID)).thenReturn(Optional.of(existing));
         when(repository.save(any(Transaction.class))).thenAnswer(returnsFirstArg());
 
-        Transaction saved = service.upsertFromWebhook(
+        Transaction saved = writer.upsertFromWebhook(
                 WebhookEventMother.event().withDescription(UPDATED_DESCRIPTION).build());
 
         softly.assertThat(saved).isSameAs(existing);
@@ -154,7 +95,7 @@ class TransactionServiceTest {
                 .withNewCustomer(false)
                 .build();
 
-        Transaction saved = service.upsertFromWebhook(event);
+        Transaction saved = writer.upsertFromWebhook(event);
 
         softly.assertThat(saved.getTransactionType()).isEqualTo(TransactionType.PAYOUT);
         softly.assertThat(saved.getSupplierId()).isEqualTo(SUPPLIER_ID);
@@ -179,7 +120,7 @@ class TransactionServiceTest {
         when(repository.findBySourceId(SOURCE_ID)).thenReturn(Optional.empty());
         when(repository.save(any(Transaction.class))).thenAnswer(returnsFirstArg());
 
-        Transaction saved = service.upsertFromWebhook(
+        Transaction saved = writer.upsertFromWebhook(
                 WebhookEventMother.event().withoutFulfilmentDate().build());
 
         assertThat(saved.getFulfilmentDate()).isNull();
@@ -187,7 +128,7 @@ class TransactionServiceTest {
 
     @Test
     void should_reject_unknown_transaction_type_before_touching_the_repository() {
-        assertThatThrownBy(() -> service.upsertFromWebhook(
+        assertThatThrownBy(() -> writer.upsertFromWebhook(
                 WebhookEventMother.event().withTransactionType(UNKNOWN_TRANSACTION_TYPE).build()))
                 .isInstanceOf(IllegalArgumentException.class);
 
@@ -196,14 +137,14 @@ class TransactionServiceTest {
 
     @Test
     void should_reject_unknown_status() {
-        assertThatThrownBy(() -> service.upsertFromWebhook(
+        assertThatThrownBy(() -> writer.upsertFromWebhook(
                 WebhookEventMother.event().withStatus(UNKNOWN_STATUS).build()))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void should_reject_malformed_fulfilment_date() {
-        assertThatThrownBy(() -> service.upsertFromWebhook(
+        assertThatThrownBy(() -> writer.upsertFromWebhook(
                 WebhookEventMother.event().withFulfilmentDate(MALFORMED_FULFILMENT_DATE).build()))
                 .isInstanceOf(DateTimeParseException.class);
     }

@@ -13,10 +13,6 @@ import com.challenge.transactions.domain.TransactionType;
 
 import jakarta.persistence.criteria.Predicate;
 
-/**
- * Dynamic criteria for the transaction listing, so optional filters are added
- * only when a value is given instead of being encoded as sentinel values.
- */
 public final class TransactionSpecifications {
 
     public static final Sort DEFAULT_SORT =

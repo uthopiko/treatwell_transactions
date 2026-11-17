@@ -21,8 +21,8 @@ import com.challenge.transactions.repository.TransactionRepository;
         IntegrationTestProperties.SCHEMA_CREATION,
         IntegrationTestProperties.SQL_INIT_DISABLED
 })
-@Import(TransactionService.class)
-class TransactionServiceDataIntegrationTest {
+@Import(WebhookTransactionWriter.class)
+class WebhookTransactionWriterDataIntegrationTest {
 
     private static final int SINGLE_TRANSACTION_COUNT = 1;
 
@@ -30,11 +30,11 @@ class TransactionServiceDataIntegrationTest {
     private TransactionRepository repository;
 
     @Autowired
-    private TransactionService service;
+    private WebhookTransactionWriter writer;
 
     @Test
     void should_create_and_persist_a_transaction_when_source_id_is_unknown(SoftAssertions softly) {
-        Transaction saved = service.upsertFromWebhook(
+        Transaction saved = writer.upsertFromWebhook(
                 WebhookEventMother.event().withSourceId(NEW_SOURCE_ID).build());
 
         softly.assertThat(saved.getId()).isNotNull();
@@ -45,9 +45,9 @@ class TransactionServiceDataIntegrationTest {
 
     @Test
     void should_update_the_same_row_when_type_and_source_id_match(SoftAssertions softly) {
-        Transaction created = service.upsertFromWebhook(
+        Transaction created = writer.upsertFromWebhook(
                 WebhookEventMother.event().withSourceId(NEW_SOURCE_ID).build());
-        Transaction updated = service.upsertFromWebhook(WebhookEventMother.event()
+        Transaction updated = writer.upsertFromWebhook(WebhookEventMother.event()
                 .withSourceId(NEW_SOURCE_ID)
                 .withDescription(UPDATED_DESCRIPTION)
                 .build());
