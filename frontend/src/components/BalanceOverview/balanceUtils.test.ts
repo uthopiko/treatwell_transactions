@@ -14,7 +14,7 @@ import {
 import { TransactionMother } from '../../test/object_mothers/TransactionMother';
 import {
   computeBalanceSteps,
-  formatBalanceStep,
+  formatBalanceChange,
   formatCurrency,
   formatDate,
   getDateGroupTotal,
@@ -26,9 +26,8 @@ const FORMATTED_NEGATIVE_ORDER_AMOUNT = '-€42.00';
 const FORMATTED_EARLIER_DATE = 'Mon, 18 Mar 2024';
 const TODAY_LABEL = 'Today';
 const YESTERDAY_LABEL = 'Yesterday';
-const INITIAL_BALANCE = 'Balance inicial: €35.70';
-const NEGATIVE_CHANGE_BALANCE = '€35.70 − €20.00 = €15.70';
-const POSITIVE_CHANGE_BALANCE = '-€20.00 + €35.70 = €15.70';
+const POSITIVE_BALANCE_CHANGE = '+ €35.70';
+const NEGATIVE_BALANCE_CHANGE = '− €20.00';
 
 const TERMINAL_PAYOUT_STATUSES: TransactionStatus[] = ['CANCELLED', 'REFUNDED', 'REVERSED'];
 
@@ -136,33 +135,13 @@ describe('computeBalanceSteps', () => {
   });
 });
 
-describe('formatBalanceStep', () => {
-  it('labels the first balance as the initial balance', () => {
-    const grouped = groupTransactionsByDate([TransactionMother.order()]);
-
-    expect(formatBalanceStep(computeBalanceSteps(grouped)[0])).toBe(INITIAL_BALANCE);
+describe('formatBalanceChange', () => {
+  it('shows a positive change with a plus sign', () => {
+    expect(formatBalanceChange(ORDER_NET_AMOUNT)).toBe(POSITIVE_BALANCE_CHANGE);
   });
 
-  it('adds a positive day change to the previous balance', () => {
-    const grouped = groupTransactionsByDate([
-      TransactionMother.order({ fulfilmentDate: FULFILMENT_DATE }),
-      TransactionMother.payout({ fulfilmentDate: PREVIOUS_FULFILMENT_DATE }),
-    ]);
-
-    expect(formatBalanceStep(computeBalanceSteps(grouped)[0])).toBe(
-      POSITIVE_CHANGE_BALANCE,
-    );
-  });
-
-  it('subtracts a negative day change from the previous balance', () => {
-    const grouped = groupTransactionsByDate([
-      TransactionMother.payout({ fulfilmentDate: FULFILMENT_DATE }),
-      TransactionMother.order({ fulfilmentDate: PREVIOUS_FULFILMENT_DATE }),
-    ]);
-
-    expect(formatBalanceStep(computeBalanceSteps(grouped)[0])).toBe(
-      NEGATIVE_CHANGE_BALANCE,
-    );
+  it('shows a negative change with a minus sign', () => {
+    expect(formatBalanceChange(-PAYOUT_AMOUNT)).toBe(NEGATIVE_BALANCE_CHANGE);
   });
 });
 

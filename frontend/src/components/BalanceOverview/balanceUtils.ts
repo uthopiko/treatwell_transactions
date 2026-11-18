@@ -80,13 +80,9 @@ export function computeBalanceSteps(
   return steps.reverse();
 }
 
-export function formatBalanceStep(step: BalanceStep): string {
-  if (step.isInitial) {
-    return `Balance inicial: ${formatCurrency(step.closingBalance)}`;
-  }
-
-  const sign = step.change < 0 ? '−' : '+';
-  return `${formatCurrency(step.previousBalance)} ${sign} ${formatCurrency(Math.abs(step.change))} = ${formatCurrency(step.closingBalance)}`;
+export function formatBalanceChange(amount: number): string {
+  const sign = amount < 0 ? '−' : '+';
+  return `${sign} ${formatCurrency(Math.abs(amount))}`;
 }
 
 export function formatCurrency(amount: number): string {

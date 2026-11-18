@@ -1,8 +1,16 @@
 import { useMemo } from 'react';
 import type { TransactionEntry } from '../../types/transaction';
-import { groupTransactionsByDate, computeBalanceSteps, formatBalanceStep, formatDate } from '../BalanceOverview/balanceUtils';
+import {
+  groupTransactionsByDate,
+  computeBalanceSteps,
+  formatBalanceChange,
+  formatCurrency,
+  formatDate,
+} from '../BalanceOverview/balanceUtils';
 import { TransactionCard } from '../TransactionCard/TransactionCard';
 import styles from './TransactionsList.module.css';
+
+const OPENING_BALANCE_LABEL = 'Opening balance';
 
 type TransactionsListProps = {
   transactions: TransactionEntry[];
@@ -35,7 +43,16 @@ export function TransactionsList({
             <div className={styles.dateHeader}>
               <span className={styles.dateLabel}>{formatDate(date)}</span>
               {step && (
-                <span className={styles.dateBalance}>{formatBalanceStep(step)}</span>
+                <span className={styles.dateBalance}>
+                  <span className={styles.dateBalanceAmount}>
+                    {formatCurrency(step.closingBalance)}
+                  </span>
+                  <span className={styles.dateBalanceDetail}>
+                    {step.isInitial
+                      ? OPENING_BALANCE_LABEL
+                      : formatBalanceChange(step.change)}
+                  </span>
+                </span>
               )}
             </div>
             <div className={styles.cards}>
