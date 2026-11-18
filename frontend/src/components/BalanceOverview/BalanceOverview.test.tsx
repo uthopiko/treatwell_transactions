@@ -18,10 +18,13 @@ const ORDER_TYPE: TransactionType = 'ORDER';
 const TOTAL_COUNT = 25;
 const FIRST_PAGE = 0;
 const SECOND_PAGE = 1;
+const INTERNAL_SERVER_ERROR = 500;
+const TRANSACTIONS_ERROR = 'Unable to load transactions. Please try again.';
 const TRANSACTIONS: TransactionListResponse = {
   transactions: [TransactionMother.order(), TransactionMother.payout()],
 };
 const INITIAL_SUMMARY = `Showing 1–${DEFAULT_PAGE_SIZE} of ${TOTAL_COUNT}`;
+const INITIAL_BALANCE = 'Balance inicial: €15.70';
 
 let countRequest: URL | undefined;
 let listRequest: URL | undefined;
@@ -61,6 +64,7 @@ describe('BalanceOverview', () => {
     expect(await screen.findByText(ORDER_REFERENCE)).toBeInTheDocument();
     expect(screen.getByText(INITIAL_SUMMARY)).toBeInTheDocument();
     expect(screen.getByText(PAYOUT_REFERENCE)).toBeInTheDocument();
+    expect(screen.getByText(INITIAL_BALANCE)).toBeInTheDocument();
     expect(countRequest?.searchParams.get('type')).toBeNull();
     expect(listRequest?.searchParams.get('page')).toBe(String(FIRST_PAGE));
     expect(listRequest?.searchParams.get('sizePerPage')).toBe(String(DEFAULT_PAGE_SIZE));
@@ -79,5 +83,18 @@ describe('BalanceOverview', () => {
       expect(listRequest?.searchParams.get('type')).toBe(ORDER_TYPE);
     });
     expect(countRequest?.searchParams.get('type')).toBe(ORDER_TYPE);
+    expect(screen.queryByText(INITIAL_BALANCE)).not.toBeInTheDocument();
+  });
+
+  it('shows an error message when the transaction list request fails', async () => {
+    server.use(
+      http.get('*/api/suppliers/:supplierId/transactions', () =>
+        new HttpResponse(null, { status: INTERNAL_SERVER_ERROR }),
+      ),
+    );
+
+    renderWithClient(<BalanceOverview supplierId={SUPPLIER_ID} />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(TRANSACTIONS_ERROR);
   });
 });

@@ -19,7 +19,7 @@ export function BalanceOverview({ supplierId }: BalanceOverviewProps) {
   const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE);
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionEntry | null>(null);
 
-  const { data, isLoading } = useTransactions(supplierId, filter, page - 1, pageSize);
+  const { data, isLoading, isError } = useTransactions(supplierId, filter, page - 1, pageSize);
   const { data: countData, isLoading: isCountLoading } = useTransactionCount(supplierId, filter);
 
   const transactions = useMemo(
@@ -62,10 +62,17 @@ export function BalanceOverview({ supplierId }: BalanceOverviewProps) {
           <div className={styles.state} role="status">Loading transactions...</div>
         )}
 
-        {!isLoading && (
+        {isError && (
+          <div className={styles.error} role="alert">
+            Unable to load transactions. Please try again.
+          </div>
+        )}
+
+        {!isLoading && !isError && (
           <TransactionsList
             transactions={transactions}
             onTransactionClick={handleTransactionClick}
+            showBalance={filter === 'all'}
           />
         )}
       </div>

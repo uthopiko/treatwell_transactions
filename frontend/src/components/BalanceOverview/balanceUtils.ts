@@ -1,5 +1,13 @@
 import type { TransactionEntry, TransactionFilter } from '../../types/transaction';
 
+export type BalanceStep = {
+  date: string;
+  previousBalance: number;
+  change: number;
+  closingBalance: number;
+  isInitial: boolean;
+};
+
 export type BalanceFilterItem = {
   label: string;
   value: TransactionFilter;
@@ -45,20 +53,40 @@ export function getDateGroupTotal(transactions: TransactionEntry[]): number {
   return transactions.reduce((sum, tx) => sum + balanceImpact(tx), 0);
 }
 
-export function computeClosingBalances(
+export function computeBalanceSteps(
   grouped: Map<string, TransactionEntry[]>,
-): Map<string, number> {
+): BalanceStep[] {
   const dates = Array.from(grouped.keys());
   // dates are newest-first; reverse to accumulate from oldest
   const oldestFirst = [...dates].reverse();
-  const balances = new Map<string, number>();
+  const steps: BalanceStep[] = [];
   let running = 0;
-  for (const date of oldestFirst) {
-    const dayNet = getDateGroupTotal(grouped.get(date)!);
-    running += dayNet;
-    balances.set(date, running);
+
+  oldestFirst.forEach((date, index) => {
+    const change = getDateGroupTotal(grouped.get(date)!);
+    const closingBalance = running + change;
+
+    steps.push({
+      date,
+      previousBalance: running,
+      change,
+      closingBalance,
+      isInitial: index === 0,
+    });
+
+    running = closingBalance;
+  });
+
+  return steps.reverse();
+}
+
+export function formatBalanceStep(step: BalanceStep): string {
+  if (step.isInitial) {
+    return `Balance inicial: ${formatCurrency(step.closingBalance)}`;
   }
-  return balances;
+
+  const sign = step.change < 0 ? '−' : '+';
+  return `${formatCurrency(step.previousBalance)} ${sign} ${formatCurrency(Math.abs(step.change))} = ${formatCurrency(step.closingBalance)}`;
 }
 
 export function formatCurrency(amount: number): string {

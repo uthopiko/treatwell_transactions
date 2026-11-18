@@ -26,6 +26,10 @@ export function TransactionCard({ transaction, onClick }: TransactionCardProps) 
         <div className={`${styles.amount} ${isNegative ? styles.negative : ''}`}>
           {formatCurrency(transaction.amount)}
         </div>
+        <div className={styles.breakdown}>
+          <span>Net {formatCurrency(transaction.netAmount)}</span>
+          <span>Fee {formatCurrency(transaction.feeAmount)}</span>
+        </div>
         <StatusBadge status={transaction.status} />
       </div>
     </div>

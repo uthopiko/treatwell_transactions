@@ -26,7 +26,7 @@ Outcome: inspected the whole frontend and proposed a five-layer strategy: domain
 
 ### 2. Naming
 
-> should_ snake_case names don't follow is only fro Java
+> should_ snake_case names don't follow is only for Java. Follow standard conventions
 
 Outcome: confirmed. `should_` + snake_case stays backend-only; the frontend uses `describe` per unit and plain present-tense `it` sentences. Other Java-only rules were dropped too: `SoftAssertions`, Mockito helpers, JUnit annotations. The rules that carry over are: one rule tested once at the lowest useful level, object mothers plus fixtures, no magic values, no comments in test code.
 
@@ -44,41 +44,35 @@ Outcome: added `balanceUtils.test.ts` and `transactionCardUtils.test.ts`. A muta
 
 ### 5. The filter-list test
 
-> This test is not better in filtertabs component?
+> This test is not better in filterTabs component?
 
 Outcome: agreed, and went further. `getBalanceFilterItems()` returns a static array, so the unit test compared it to a copy of itself. It was deleted, and `FilterTabs` now owns the rule as behaviour: clicking each tab emits that tab's own filter, parameterised over all five. Rendered tab order is deliberately not asserted, because it is presentation and would need role queries that only exist after Task 4.
 
-### 6. Why components are still tested
-
-> First: Why don't you test components?
-
-Outcome: clarified that components are tested, but only for what nothing else can observe — fallbacks, conditional rows, click forwarding, loading/selection lifecycle, keyboard close and listener cleanup. Domain rules stay in unit tests because a component test cannot enumerate a type × status matrix cheaply, and re-asserting the maths through the DOM is the "test the design" trap. The user then chose to keep the order: wire tests next, components after the accessibility work.
-
-### 7. Wire tests
+### 6. Wire tests
 
 > 1
 
 Outcome: added `api/transactions.test.ts` and `useTransactions.test.tsx`. The URL is asserted through `URL`/`searchParams` so the incidental trailing `?` is not pinned. A real trap was found: with `restoreMocks` enabled, a module-scope `vi.spyOn(globalThis, 'fetch')` is detached before each test and the real `fetch` runs; the spy is created in `beforeEach` instead. A follow-up mutation (`sales → PAYIN`, dropping the `toDate` param) failed exactly four tests.
 
-### 8. Non-empty fixtures
+### 7. Non-empty fixtures
 
 > I changed test to look if the transaction data has the length of the mocked value. Fits for you? Why not test with not empty list¿
 
 Outcome: the added assertion compared an empty array's length to an empty array's length, so it could not tell a surfaced response from a default. The fixture became a non-empty list built from the mothers, the matrix kept asserting only the request, and one separate test asserts the full payload with `toEqual` instead of `.length`.
 
-### 9. Why keep the payload assertion
+### 8. Why keep the payload assertion
 
 > But maybe can be added transformation in the future, in this way we ensure it
 
 Outcome: agreed. The payload test is the hook's output contract: a future `select` or flattening step fails it and forces the change to be deliberate. It guards the contract, not the correctness of a transformation, so transformation rules need their own tests at their own level.
 
-### 10. The response helper
+### 9. The response helper
 
 > Why is needed function responseWith ... I don't understand well the as unknown as Response??
 
 Outcome: explained that the helper builds the stubbed response in one place, and that `as unknown as Response` is a double assertion used because the three-property object does not overlap enough with the real type. The cast was replaced with a real `Response` (`new Response(JSON.stringify(body), …)`), which keeps type checking on and exercises real JSON serialisation.
 
-### 11. This document
+### 10. This document
 
 > Can you resume this with prompts in /docs like the other testing in java?
 

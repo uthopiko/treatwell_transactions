@@ -13,7 +13,8 @@ import {
 } from '../../test/fixtures/TestFixtures';
 import { TransactionMother } from '../../test/object_mothers/TransactionMother';
 import {
-  computeClosingBalances,
+  computeBalanceSteps,
+  formatBalanceStep,
   formatCurrency,
   formatDate,
   getDateGroupTotal,
@@ -25,6 +26,9 @@ const FORMATTED_NEGATIVE_ORDER_AMOUNT = '-€42.00';
 const FORMATTED_EARLIER_DATE = 'Mon, 18 Mar 2024';
 const TODAY_LABEL = 'Today';
 const YESTERDAY_LABEL = 'Yesterday';
+const INITIAL_BALANCE = 'Balance inicial: €35.70';
+const NEGATIVE_CHANGE_BALANCE = '€35.70 − €20.00 = €15.70';
+const POSITIVE_CHANGE_BALANCE = '-€20.00 + €35.70 = €15.70';
 
 const TERMINAL_PAYOUT_STATUSES: TransactionStatus[] = ['CANCELLED', 'REFUNDED', 'REVERSED'];
 
@@ -92,27 +96,73 @@ describe('getDateGroupTotal', () => {
   });
 });
 
-describe('computeClosingBalances', () => {
-  it('accumulates each closing balance from the oldest date', () => {
+describe('computeBalanceSteps', () => {
+  it('accumulates each balance step from the oldest date', () => {
     const grouped = groupTransactionsByDate([
       TransactionMother.payin(),
       TransactionMother.payout({ fulfilmentDate: PREVIOUS_FULFILMENT_DATE }),
       TransactionMother.order({ fulfilmentDate: EARLIER_FULFILMENT_DATE }),
     ]);
 
-    const balances = computeClosingBalances(grouped);
+    const steps = computeBalanceSteps(grouped);
+    const [today, previous, earliest] = steps;
 
-    expect(balances.get(EARLIER_FULFILMENT_DATE)).toBeCloseTo(ORDER_NET_AMOUNT);
-    expect(balances.get(PREVIOUS_FULFILMENT_DATE)).toBeCloseTo(
-      ORDER_NET_AMOUNT - PAYOUT_AMOUNT,
-    );
-    expect(balances.get(FULFILMENT_DATE)).toBeCloseTo(
+    expect(steps.map((step) => step.date)).toEqual([
+      FULFILMENT_DATE,
+      PREVIOUS_FULFILMENT_DATE,
+      EARLIER_FULFILMENT_DATE,
+    ]);
+
+    expect(earliest.previousBalance).toBe(0);
+    expect(earliest.change).toBeCloseTo(ORDER_NET_AMOUNT);
+    expect(earliest.closingBalance).toBeCloseTo(ORDER_NET_AMOUNT);
+    expect(earliest.isInitial).toBe(true);
+
+    expect(previous.previousBalance).toBeCloseTo(ORDER_NET_AMOUNT);
+    expect(previous.change).toBeCloseTo(-PAYOUT_AMOUNT);
+    expect(previous.closingBalance).toBeCloseTo(ORDER_NET_AMOUNT - PAYOUT_AMOUNT);
+    expect(previous.isInitial).toBe(false);
+
+    expect(today.previousBalance).toBeCloseTo(ORDER_NET_AMOUNT - PAYOUT_AMOUNT);
+    expect(today.change).toBeCloseTo(-PAYIN_AMOUNT);
+    expect(today.closingBalance).toBeCloseTo(
       ORDER_NET_AMOUNT - PAYOUT_AMOUNT - PAYIN_AMOUNT,
+    );
+    expect(today.isInitial).toBe(false);
+  });
+
+  it('returns no steps when there is nothing to accumulate', () => {
+    expect(computeBalanceSteps(new Map())).toEqual([]);
+  });
+});
+
+describe('formatBalanceStep', () => {
+  it('labels the first balance as the initial balance', () => {
+    const grouped = groupTransactionsByDate([TransactionMother.order()]);
+
+    expect(formatBalanceStep(computeBalanceSteps(grouped)[0])).toBe(INITIAL_BALANCE);
+  });
+
+  it('adds a positive day change to the previous balance', () => {
+    const grouped = groupTransactionsByDate([
+      TransactionMother.order({ fulfilmentDate: FULFILMENT_DATE }),
+      TransactionMother.payout({ fulfilmentDate: PREVIOUS_FULFILMENT_DATE }),
+    ]);
+
+    expect(formatBalanceStep(computeBalanceSteps(grouped)[0])).toBe(
+      POSITIVE_CHANGE_BALANCE,
     );
   });
 
-  it('returns an empty map when there is nothing to accumulate', () => {
-    expect(computeClosingBalances(new Map()).size).toBe(0);
+  it('subtracts a negative day change from the previous balance', () => {
+    const grouped = groupTransactionsByDate([
+      TransactionMother.payout({ fulfilmentDate: FULFILMENT_DATE }),
+      TransactionMother.order({ fulfilmentDate: PREVIOUS_FULFILMENT_DATE }),
+    ]);
+
+    expect(formatBalanceStep(computeBalanceSteps(grouped)[0])).toBe(
+      NEGATIVE_CHANGE_BALANCE,
+    );
   });
 });
 

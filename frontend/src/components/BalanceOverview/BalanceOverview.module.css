@@ -29,3 +29,10 @@
   font-size: var(--text-md);
 }
 
+.error {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--color-negative);
+  font-size: var(--text-md);
+}
+

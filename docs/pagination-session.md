@@ -32,13 +32,7 @@ Requirements captured:
 
 > Plase make a plan, and make it in steps
 
-Outcome: produced a nine-step plan covering the backend count, the frontend API and hooks, the paginator, `BalanceOverview`, tests and verification.
-
-### 3. Implementation and test scope
-
-> yes please
-
-Outcome: implementation started after confirming a focused test scope:
+Outcome: produced a nine-step plan covering the backend count, the frontend API and hooks, the paginator, `BalanceOverview`, tests and verification. Implementation started after confirming a focused test scope:
 
 - backend count query and HTTP contract
 - `fetchCountTransactions` wire tests
@@ -46,21 +40,7 @@ Outcome: implementation started after confirming a focused test scope:
 - `Paginator` behaviour
 - one `BalanceOverview` flow test with MSW
 
-### 4. Function declarations vs arrow functions
-
-> one question why use function, instead use short arrow functions?What is the standard?
-
-Outcome: clarified that there is no universal standard. Named top-level exports use `function` to match the codebase and keep stack traces and declarations clear; local callbacks use arrow functions for brevity. No production code was changed for this question.
-
-### 5. Hide the page-size control when nothing can be paginated
-
-> Please don't show Rows per page if there is also no pages to show like page buttons
-
-Outcome: the whole controls area, including `Rows per page`, is now rendered only when the paginator has more than one page. This also applies to `All`, one-page results and empty results.
-
-A tradeoff was flagged: once `All` or a large page size removes the controls, the user cannot switch back to a numeric page size without reloading.
-
-### 6. This document
+### 3. This document
 
 > Create a resume about it like in others
 
